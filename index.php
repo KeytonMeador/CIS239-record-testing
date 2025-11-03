@@ -26,15 +26,26 @@ for ($i = 0; $i < 3 && $i < count($records); $i++) {
     $r = $records[$i];
     $lines[] = "{$r['title']} — {$r['format_name']} - \${$r['price']}";
 }
-
-
-
-
+foreach ($lines as $line) {
+    echo $line . "\n";
+}
 ?>
 <hr>
 
 <h2>Unit Test 3 — Insert</h2>
 <?php
+$insert_data = [
+    'title' => 'Demo Title',
+    'format_id' => 1,
+    'artist' => 'Demo Artist',
+    'price' => 9.99
+];
+
+record_insert();
+$records = records_all();
+$newest = $records[0];
+echo " \n Newest: {$newest['title']} - {$newest['format_name']}";
+
 ?>
 <hr>
 
@@ -52,5 +63,4 @@ Abbey Road — 45 - $19.99
 Unit Test 3 — Insert
 
 Insert success: true, rows: 1
-Newest: Demo Title — cd 
--->
+Newest: Demo Title — cd
