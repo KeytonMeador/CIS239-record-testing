@@ -45,20 +45,21 @@ On index.php, label output as Unit Test 3 — Insert and echo something like:
 Then call records_all() again to confirm your new record appears at the top.
 */
 
-function record_insert(): void {
+function record_insert(): void
+{
     $title = 'Demo Title';
     $artist = 'Demo Artist';
     $price = 9.99;
-    $format_id = 1; 
+    $format_id = 1;
 
     $pdo = get_pdo();
     $stmt = $pdo->prepare('INSERT INTO records (title, artist, price, format_id) VALUES (:title, :artist, :price, :format_id)');
-    
-    $stmt->execute ([
-    'title' => $title,
-    'artist'=> $artist,
-    'price' => $price,
-    'format_id' => $format_id
+
+    $stmt->execute([
+        'title' => $title,
+        'artist' => $artist,
+        'price' => $price,
+        'format_id' => $format_id
     ]);
 
     if ($stmt->rowCount() === 1) {
@@ -68,5 +69,4 @@ function record_insert(): void {
     }
 
     $records = records_all();
-    
 }
