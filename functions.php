@@ -27,7 +27,12 @@ On index.php, label output as Unit Test 2 — Records JOIN and print first 3 lin
 function records_all(): array
 {
     $pdo = get_pdo();
-    $stmt = $pdo->query('SELECT records.title, records.artist, records.price, formats.name AS format_name FROM records JOIN formats ON records.format_id = formats.id ORDER BY records.id DESC');
+    // Join formats to get the format name
+    $sql = 'SELECT records.id, records.title, records.artist, records.price, formats.name AS format_name
+            FROM records
+            JOIN formats ON records.format_id = formats.id
+            ORDER BY records.id DESC';
+    $stmt = $pdo->query($sql);
     return $stmt->fetchAll();
 }
 
@@ -47,19 +52,41 @@ Then call records_all() again to confirm your new record appears at the top.
 
 function record_insert(): void
 {
-    $title = 'Demo Title';
-    $artist = 'Demo Artist';
-    $price = 9.99;
-    $format_id = 1;
+    // Only perform an insert when a POST create action is present
+    $is_post_create = ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create');
+    if (!$is_post_create) {
+        // do nothing when called without POST create
+        return;
+    }
+
+    // Collect and validate POSTed values
+    $title = isset($_POST['title']) ? trim($_POST['title']) : '';
+    $artist = isset($_POST['artist']) ? trim($_POST['artist']) : '';
+    $price = isset($_POST['price']) ? trim($_POST['price']) : '';
+    // form field is named "format" in the form partial
+    $format_id = isset($_POST['format']) ? (int) $_POST['format'] : 0;
+
+    // Basic validation
+    if ($title === '' || $artist === '' || $price === '' || $format_id <= 0) {
+        echo "Insert success: false, reason: missing required fields";
+        return;
+    }
+
+    if (!is_numeric($price)) {
+        echo "Insert success: false, reason: invalid price";
+        return;
+    }
+
+    $price = (float) $price;
 
     $pdo = get_pdo();
     $stmt = $pdo->prepare('INSERT INTO records (title, artist, price, format_id) VALUES (:title, :artist, :price, :format_id)');
 
     $stmt->execute([
-        'title' => $title,
-        'artist' => $artist,
-        'price' => $price,
-        'format_id' => $format_id
+        ':title' => $title,
+        ':artist' => $artist,
+        ':price' => $price,
+        ':format_id' => $format_id,
     ]);
 
     if ($stmt->rowCount() === 1) {
@@ -67,6 +94,100 @@ function record_insert(): void
     } else {
         echo "Insert success: false, rows: 0";
     }
+}
 
-    $records = records_all();
+// helper: demo insert (kept separate if you want to seed during tests)
+function record_insert_demo(): void
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare('INSERT INTO records (title, artist, price, format_id) VALUES (:title, :artist, :price, :format_id)');
+    $stmt->execute([
+        ':title' => 'Demo Title',
+        ':artist' => 'Demo Artist',
+        ':price' => 9.99,
+        ':format_id' => 1,
+    ]);
+}
+
+/**
+ * Find a single record by id and return it (includes format_name)
+ */
+function record_find(int $id)
+{
+    $pdo = get_pdo();
+    $sql = 'SELECT records.id, records.title, records.artist, records.price, records.format_id, formats.name AS format_name
+            FROM records
+            JOIN formats ON records.format_id = formats.id
+            WHERE records.id = :id';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':id' => $id]);
+    return $stmt->fetch();
+}
+
+/**
+ * Update a record using POST data when available. Expects POST['action'] === 'update' and POST['id'] set.
+ */
+function record_update(): void
+{
+    if (!isset($_POST['id'])) {
+        echo "Update success: false, reason: missing id";
+        return;
+    }
+
+    $id = (int) $_POST['id'];
+    $title = isset($_POST['title']) ? trim($_POST['title']) : '';
+    $artist = isset($_POST['artist']) ? trim($_POST['artist']) : '';
+    $price = isset($_POST['price']) ? trim($_POST['price']) : '';
+    $format_id = isset($_POST['format']) ? (int) $_POST['format'] : 0;
+
+    if ($title === '' || $artist === '' || $price === '' || $format_id <= 0) {
+        echo "Update success: false, reason: missing required fields";
+        return;
+    }
+
+    if (!is_numeric($price)) {
+        echo "Update success: false, reason: invalid price";
+        return;
+    }
+
+    $price = (float) $price;
+
+    $pdo = get_pdo();
+    $sql = 'UPDATE records SET title = :title, artist = :artist, price = :price, format_id = :format_id WHERE id = :id';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':title' => $title,
+        ':artist' => $artist,
+        ':price' => $price,
+        ':format_id' => $format_id,
+        ':id' => $id,
+    ]);
+
+    if ($stmt->rowCount() === 1) {
+        echo "Update success: true, rows: 1";
+    } else {
+        echo "Update success: false, rows: 0";
+    }
+}
+
+/**
+ * Delete a record by id. Reads POST['id'] when called from a form.
+ */
+function record_delete(): void
+{
+    if (!isset($_POST['id'])) {
+        echo "Delete success: false, reason: missing id";
+        return;
+    }
+
+    $id = (int) $_POST['id'];
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare('DELETE FROM records WHERE id = :id');
+    $stmt->execute([':id' => $id]);
+
+    if ($stmt->rowCount() === 1) {
+        echo "Delete success: true, rows: 1";
+    } else {
+        echo "Delete success: false, rows: 0";
+    }
 }

@@ -14,6 +14,7 @@ $records = records_all();
             <th>Artist</th>
             <th>Format</th>
             <th>Price</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -22,7 +23,16 @@ $records = records_all();
                 <td><?= htmlspecialchars($record['title']) ?></td>
                 <td><?= htmlspecialchars($record['artist']) ?></td>
                 <td><?= htmlspecialchars($record['format_name']) ?></td>
-                <td><?= htmlspecialchars($record['price']) ?></td>
+                <td>$<?= number_format((float)$record['price'], 2) ?></td>
+                <td>
+                    <a class="btn btn-sm btn-primary" href="?view=edit&id=<?= (int)$record['id'] ?>">Edit</a>
+
+                    <form method="post" action="?view=list" style="display:inline-block; margin-left:6px;" onsubmit="return confirm('Delete this record?');">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="id" value="<?= (int)$record['id'] ?>">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
             </tr>
         <?php endforeach; ?>
     </tbody>

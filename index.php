@@ -54,10 +54,14 @@ include __DIR__ . '/components/nav.php';
         'price' => 9.99
     ];
 
-    record_insert();
+    // Note: record_insert() now only runs on POST create. To test insert, use the Create form.
     $records = records_all();
-    $newest = $records[0];
-    echo " \n Newest: {$newest['title']} - {$newest['format_name']}";
+    if (count($records) > 0) {
+        $newest = $records[0];
+        echo " \n Newest: {$newest['title']} - {$newest['format_name']}";
+    } else {
+        echo "No records yet. Use Create to add one.";
+    }
 
     ?>
     <hr>
@@ -77,6 +81,12 @@ $action = $_POST['action'] ?? '';
 if ($action === 'create') {
     record_insert();
     $view = 'created';
+} elseif ($action === 'update') {
+    record_update();
+    $view = 'updated';
+} elseif ($action === 'delete') {
+    record_delete();
+    $view = 'deleted';
 }
 ?>
 
@@ -89,6 +99,12 @@ if ($action === 'create') {
             include __DIR__ . '/partials/record-form.php';
         } elseif ($view === 'created') {
             include __DIR__ . '/partials/record-created.php';
+        } elseif ($view === 'edit') {
+            include __DIR__ . '/partials/record-edit.php';
+        } elseif ($view === 'updated') {
+            include __DIR__ . '/partials/record-updated.php';
+        } elseif ($view === 'deleted') {
+            include __DIR__ . '/partials/record-deleted.php';
         }
         ?>
     </div>
